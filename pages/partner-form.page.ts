@@ -61,4 +61,18 @@ export class PartnerFormPage extends BasePage {
   async save() {
     await this.saveButton.click();
   }
+
+  /**
+   * Edit reuses this same modal, pre-filled with existing values (confirmed
+   * live - e.g. #phone-field already shows the fully-formatted
+   * "+359 88 812 3456", not raw digits). Only touch the fields being
+   * changed rather than reusing fillForm(), which assumes empty
+   * create-mode fields and would needlessly re-touch the address
+   * autocomplete/logo crop-modal for data that's already correct.
+   */
+  async updateNameAndDescription(name: string, description: string) {
+    await this.nameField.fill(name);
+    await this.descriptionField.fill(description);
+    await this.save();
+  }
 }
