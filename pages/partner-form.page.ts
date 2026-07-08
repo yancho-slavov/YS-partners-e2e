@@ -4,6 +4,28 @@ import { PARTNER_TYPE_PATTERN } from '../test-data/constants';
 import type { Partner } from '../test-data/partner-factory';
 
 const SAVE_BUTTON_PATTERN = /Запази|Save/i;
+// Text-based matching was tried first (the visible "Моля, ..." prefix) but
+// proved unreliable: this app's rendered UI language flips between
+// Bulgarian and English unpredictably, sometimes within seconds on the same
+// account (confirmed live - see docs/inspection-notes.md), and the actual
+// English wording for these specific messages could not be captured at all
+// in one such run. There's no data-testid/ARIA role on these error nodes
+// either. The one thing that stayed consistent across repeated runs in
+// both languages is the error element's CSS class - a build-hash class
+// name, which is a real tradeoff (could change on redeploy) but is more
+// reliable here than text that silently changes language mid-session.
+const VALIDATION_ERROR_SELECTOR = '.svY0B';
+
+export type RequiredField =
+  | 'name'
+  | 'type'
+  | 'services'
+  | 'subscriptionTier'
+  | 'address'
+  | 'phone'
+  | 'contactPerson'
+  | 'description'
+  | 'logo';
 
 export class PartnerFormPage extends BasePage {
   readonly nameField = this.page.locator('#name-field');
@@ -15,6 +37,7 @@ export class PartnerFormPage extends BasePage {
   readonly contactPersonField = this.page.locator('#contact-person-field');
   readonly descriptionField = this.page.locator('#description-field');
   readonly logoInput = this.page.locator('input[type="file"]');
+  readonly validationErrors = this.page.locator(VALIDATION_ERROR_SELECTOR);
 
   private get saveButton(): Locator {
     return this.activeModal.locator('button:visible').filter({ hasText: SAVE_BUTTON_PATTERN }).last();
@@ -60,6 +83,28 @@ export class PartnerFormPage extends BasePage {
 
   async save() {
     await this.saveButton.click();
+  }
+
+  async cancel() {
+    await this.activeModal.locator('button:visible').filter({ hasText: /Отказ|Cancel/i }).last().click();
+  }
+
+  /** Fills every required field except `omit` - used to prove each required
+   * field independently triggers validation, one at a time, while the rest
+   * of the form is otherwise valid. */
+  async fillFormOmitting(partner: Partner, logoPath: string, omit: RequiredField) {
+    if (omit !== 'name') await this.nameField.fill(partner.name);
+    if (omit !== 'type') await this.selectAntOption(this.typeField, PARTNER_TYPE_PATTERN);
+    if (omit !== 'services') {
+      await this.selectFirstOption(this.serviceTypesField);
+      await this.page.keyboard.press('Escape');
+    }
+    if (omit !== 'subscriptionTier') await this.selectFirstOption(this.subscriptionTierField);
+    if (omit !== 'address') await this.fillAddress(partner.address);
+    if (omit !== 'phone') await this.phoneField.fill(partner.phoneDigits);
+    if (omit !== 'contactPerson') await this.contactPersonField.fill(partner.contactPerson);
+    if (omit !== 'description') await this.descriptionField.fill(partner.description);
+    if (omit !== 'logo') await this.uploadLogo(logoPath);
   }
 
   /**

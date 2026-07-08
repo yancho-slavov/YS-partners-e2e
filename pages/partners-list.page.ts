@@ -10,8 +10,13 @@ export class PartnersListPage extends BasePage {
 
   async searchFor(name: string) {
     await this.searchInput.fill(name);
-    // Debounced search - wait for the table to settle rather than a fixed sleep.
-    await this.page.waitForLoadState('networkidle');
+    // Search is debounced client-side. Deliberately no explicit wait here -
+    // `waitForLoadState('networkidle')` was tried but proved unreliable on
+    // this app (confirmed live: it can hang well past the debounce, likely
+    // due to persistent background network activity elsewhere on the page).
+    // Callers already use Playwright's own auto-retrying locator actions/
+    // assertions (`.click()`, `toHaveCount()`), which tolerate the debounce
+    // delay without needing a manual wait here.
   }
 
   rowByName(name: string) {
