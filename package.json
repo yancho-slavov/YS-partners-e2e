@@ -1,0 +1,26 @@
+{
+  "name": "partners-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright + TypeScript E2E suite for the Partners module of the FinTech admin platform",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.1.1",
+    "dotenv": "^17.4.2",
+    "eslint": "^9.39.4",
+    "eslint-plugin-playwright": "^2.10.5",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.63.0"
+  }
+}
