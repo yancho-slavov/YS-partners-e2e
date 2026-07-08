@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { LoginPage } from '../../pages/login.page';
+import { BasePage } from '../../pages/base.page';
 import { env } from '../../utils/env';
 
 // Login itself must stay under test even though every other spec reuses a
@@ -51,6 +52,29 @@ test.describe('Login @smoke', () => {
       await expect(loginPage.requiredFieldErrors).toHaveCount(2);
       await expect(loginPage.emailInput).toHaveClass(/ant-input-status-error/);
       await expect(loginPage.passwordInput).toHaveClass(/ant-input-status-error/);
+      await expect(page).toHaveURL(/\/login/);
+    });
+  });
+});
+
+test.describe('Logout @smoke', () => {
+  // This block needs to start authenticated, unlike the rest of this file -
+  // reuse the shared storageState from the `setup` project instead of the
+  // file-level unauthenticated override above.
+  test.use({ storageState: 'playwright/.auth/user.json' });
+
+  test('logs out and revokes access to protected routes', async ({ page }) => {
+    const basePage = new BasePage(page);
+
+    await test.step('Confirm starting authenticated, then log out via the sidebar', async () => {
+      await page.goto('/partners');
+      await expect(page).toHaveURL(/\/partners/);
+      await basePage.logout();
+      await expect(page).toHaveURL(/\/login/);
+    });
+
+    await test.step('Confirm the session was actually revoked, not just a UI redirect', async () => {
+      await page.goto('/partners');
       await expect(page).toHaveURL(/\/login/);
     });
   });
